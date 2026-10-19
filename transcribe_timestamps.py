@@ -1,81 +1,63 @@
 
-import whisper
 import os
 import json
-
-# Folder containing audio files
-folder_path = r"C:\Users\user\Downloads\songs"
+import whisper
 
 # Load Whisper model
 model = whisper.load_model("base")
 
-# Supported audio formats
-audio_formats = (".mp3", ".wav", ".m4a", ".flac")
+def transcribe_with_timestamps(file_path):
 
-# Convert seconds into timestamp format
-def format_time(seconds):
-    minutes = int(seconds // 60)
-    remaining_seconds = int(seconds % 60)
-    return f"{minutes:02d}:{remaining_seconds:02d}"
+    # Check whether the audio file exists
+    if not os.path.isfile(file_path):
+        print("Error: Audio file not found.")
+        return None
 
-# Check folder
-if not os.path.exists(folder_path):
-    print("Folder not found!")
+    # Check audio format
+    if not file_path.lower().endswith((".mp3", ".wav")):
+        print("Error: Only MP3 and WAV files are supported.")
+        return None
 
-else:
-    for file in os.listdir(folder_path):
+    try:
+        print("Transcribing audio...")
 
-        if file.lower().endswith(audio_formats):
+        # Convert audio into text with timestamps
+        result = model.transcribe(file_path, fp16=False)
 
-            audio_path = os.path.join(folder_path, file)
+        segments = []
 
-            print("\nTranscribing:", file)
+        for segment in result["segments"]:
 
-            try:
-                # Convert audio into text
-                result = model.transcribe(
-                    audio_path,
-                    fp16=False
-                )
+            data = {
+                "start": round(segment["start"], 2),
+                "end": round(segment["end"], 2),
+                "text": segment["text"].strip()
+            }
 
-                segments = []
+            segments.append(data)
 
-                # Get text with timestamps
-                for segment in result["segments"]:
+            print(
+                f"[{data['start']}s - {data['end']}s] "
+                f"{data['text']}"
+            )
 
-                    start = format_time(segment["start"])
-                    end = format_time(segment["end"])
-                    text = segment["text"].strip()
+        # Save transcription with timestamps
+        output_file = os.path.splitext(file_path)[0] + ".json"
 
-                    print(f"[{start} - {end}] {text}")
+        with open(output_file, "w", encoding="utf-8") as file:
+            json.dump(segments, file, indent=4, ensure_ascii=False)
 
-                    segments.append({
-                        "start": segment["start"],
-                        "end": segment["end"],
-                        "text": text
-                    })
+        print("\nSaved at:", output_file)
 
-                # Save transcription as TXT
-                txt_path = os.path.splitext(audio_path)[0] + ".txt"
+        return segments
 
-                with open(txt_path, "w", encoding="utf-8") as f:
-                    for segment in segments:
-                        start = format_time(segment["start"])
-                        end = format_time(segment["end"])
-                        f.write(
-                            f"[{start} - {end}] {segment['text']}\n"
-                        )
+    except Exception as e:
+        print("Error:", e)
+        return None
 
-                # Save transcription as JSON
-                json_path = os.path.splitext(audio_path)[0] + ".json"
 
-                with open(json_path, "w", encoding="utf-8") as f:
-                    json.dump(segments, f, indent=4, ensure_ascii=False)
+if __name__ == "__main__":
 
-                print("Transcription saved successfully!")
+    audio_path = input("Enter audio file path: ").strip().strip('"')
 
-            except Exception as e:
-                print("Error:", e)
-
-    print("\nProcess finished!")
-
+    transcribe_with_timestamps(audio_path)
