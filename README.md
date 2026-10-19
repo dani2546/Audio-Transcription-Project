@@ -1,94 +1,91 @@
-# Audio Transcription Project
+Audio Transcription Pipeline
+A simple Python project that accepts an MP3 or WAV audio file, converts speech into text using OpenAI Whisper, and returns timestamps for each spoken segment.
 
-This project has three simple Python scripts. They let me select an audio file, turn speech into text, and get text with timestamps.
-
-## What each script does
-
-| Question | File | What it does |
-| --- | --- | --- |
-| 1. Accept an audio file (WAV or MP3) | `Vorga.py` | Shows MP3/WAV files in a local folder, lets me choose one, and copies it to another folder. |
-| 2. Transcribe spoken language into text | `transcribes.py` | Reads audio, converts speech to text using Whisper, prints the text, and saves a TXT file. |
-| 3. Return transcription with timestamps per segment | `transcribe_timestamps.py` | Converts audio to text, shows the start and end time of each segment, and saves TXT and JSON files. |
-
-## My approach and design decisions
-
-I kept the project in three scripts because each question asks for a different task. This makes the code easier to read, test, and explain.
-
-I used Python because it is simple to work with files. For speech recognition, I chose OpenAI Whisper's `base` model because it is a reasonable starting point for a small project. I set `fp16=False` so the scripts can run on a computer without a supported GPU.
-
-For the first task, I let the user choose a file by number. I copy the file instead of moving it, so the original stays safe. For the second task, I save the text as a TXT file because it is easy to open. For the third task, I save both TXT and JSON. TXT is easy to read, while JSON keeps the exact start time, end time, and text of each segment.
-
-I also added basic checks and error messages so the program can report a missing folder or a transcription problem.
-
-## How I answer the three questions
-
-### 1. How does the script accept WAV or MP3 files?
-The first script checks a folder for MP3 and WAV files. It displays the available files, asks the user to enter a number, and copies the selected file to an upload folder. This is a local file-copy process, not a website upload.
-
-### 2. How does the script convert speech into text?
-The second script loads the Whisper model, checks the audio folder, and reads supported audio files. Whisper listens to the audio and returns the spoken words as text. The script prints the result and saves it in a TXT file.
-
-### 3. How does the script return timestamps?
-The third script uses Whisper's segments. Each segment has a start time, an end time, and spoken text. The script prints these details and saves them in TXT and JSON files. The displayed TXT times use minutes and seconds; JSON keeps the numeric times in seconds.
-
-## Other design questions
-
-These are ideas for improving the project later. **They are not all implemented in the three scripts.**
-
-### How do you handle different audio formats?
-The transcription scripts accept MP3, WAV, M4A, and FLAC file names. Whisper uses FFmpeg to read the audio. The file-selection script currently accepts only MP3 and WAV. If I want more formats in that script, I can add them to its allowed file list.
-
-### How do you deal with long audio files?
-At the moment, Whisper processes each audio file when the script reaches it. For very long files, I would split the audio into smaller parts, process them one by one, and join the results. I would adjust the timestamps so they still match the original recording.
-
-### How would you handle concurrent uploads?
-The current scripts run locally, one file at a time. For many users, I would build a web service that accepts uploads and puts them in a queue. Background workers could process different files without making users wait on the upload page.
-
-### How would you store audio and transcripts?
-Right now, audio stays in local folders and the scripts save TXT or JSON files next to the source audio. In a larger system, I would store uploaded audio in a separate storage folder or cloud storage. I would keep transcript files and basic details, such as file name and processing status, in organized storage or a database.
-
-### How do you retry or recover failed transcriptions?
-Right now, the scripts catch errors, print a message, and continue to the next file. They do not automatically retry. Later, I would save a failed job's status and retry it a limited number of times. I would also log the error so I can fix the problem.
-
-### How would you expose this as an API?
-The current project does not have an API. I would use Flask or FastAPI to add an endpoint such as `POST /transcribe`. A user could send an audio file and receive JSON containing the text and segment timestamps. For long jobs, the API could return a job ID and let the user check progress later.
-
-## How to run in VS Code (Windows)
-
-1. Install Python and FFmpeg. Check FFmpeg by running `ffmpeg -version` in the terminal.
-2. Open this project folder in VS Code.
-3. Install the Python dependency:
-
-   ```powershell
-   python -m pip install -r requirements.txt
-   ```
-
-4. Update `folder_path` in the three scripts to point to your audio folder. In `Vorga.py`, update `upload_folder` if needed. The original code uses `C:\Users\user\Downloads\songs`.
-5. Run whichever script you need:
-
-   ```powershell
-   python Vorga.py
-   python transcribes.py
-   python transcribe_timestamps.py
-   ```
-
-The first Whisper run may download the model. Use the same Python interpreter for installation and running.
-
-## Push this project to GitHub
-
-Create an **empty** public repository named `Audio-Transcription-Project` at https://github.com/new. Do not initialize it with a README.
-
-Open the project folder in VS Code, then run:
-
-```powershell
-git init
-git branch -M main
-git add .
-git commit -m "Add scripts and design decisions README"
-git remote add origin https://github.com/dani2546/Audio-Transcription-Project.git
-git push -u origin main
-```
-
-If you already connected the `origin` remote, skip the `git remote add origin` command. If you already pushed the project, just run `git add README.md`, `git commit -m "Explain design decisions"`, and `git push`.
-
-**Before publishing:** Do not include private recordings, transcripts, passwords, or large model files. The original Python scripts are kept unchanged.
+The project is divided into three scripts so each step can be run and tested separately.
+Features
+- Accepts MP3 and WAV audio files
+- Checks whether the selected file exists and has a supported extension
+- Copies the original audio into an uploads folder
+- Converts speech into text using the open-source Whisper model
+- Saves the transcription as a .txt file
+- Returns segment-level start times, end times, and spoken text
+- Saves timestamped results as a .json file
+- Handles common errors such as missing files and unsupported extensions
+Project Structure
+audio-transcription-pipeline/
+├── audio_upload.py       # Part 1: Accept and copy audio files
+├── transcribes.py        # Part 2: Convert speech into text
+├── timestamps.py         # Part 3: Generate timestamped segments
+├── uploads/              # Created automatically by audio_upload.py
+└── README.md
+Requirements
+- Python
+- OpenAI Whisper
+- FFmpeg installed and available in your system PATH
+- Internet access the first time Whisper downloads its model
+Install Whisper in the VS Code terminal:
+python -m pip install -U openai-whisper
+Note: FFmpeg must be installed separately. Check it using:
+ffmpeg -version
+How to Run
+Open the project folder in VS Code and run the scripts in order.
+Part 1: Accept an audio file
+python audio_upload.py
+When prompted, enter the full path to an MP3 or WAV file, for example:
+C:\Users\user\Downloads\songs\Chan.mp3
+The script checks the file and copies it into the uploads folder. The original file stays unchanged. A file with the same name in the uploads folder may be overwritten.
+Part 2: Transcribe speech into text
+python transcribes.py
+Enter the path to the audio file, such as:
+uploads\Chan.mp3
+The script uses Whisper's base model to recognize speech, displays the transcription, and saves a text file next to the audio file (for example, uploads\Chan.txt).
+Part 3: Generate timestamps for each segment
+python timestamps.py
+Enter the audio file path again:
+uploads\Chan.mp3
+The script prints each segment with its start and end time and saves the result as JSON (for example, uploads\Chan.json).
+Example Output
+Example terminal output (illustrative; actual text and timestamps depend on the audio):
+[0.0s - 2.5s] Hello everyone.
+[2.5s - 5.8s] Welcome to today's meeting.
+[5.8s - 9.2s] We will discuss our project.
+Example JSON:
+[
+  {
+    "start": 0.0,
+    "end": 2.5,
+    "text": "Hello everyone."
+  },
+  {
+    "start": 2.5,
+    "end": 5.8,
+    "text": "Welcome to today's meeting."
+  },
+  {
+    "start": 5.8,
+    "end": 9.2,
+    "text": "We will discuss our project."
+  }
+]
+How It Works
+1. Audio input: audio_upload.py checks the path and extension, then copies the file to uploads/.
+2. Speech-to-text: transcribes.py loads Whisper and converts the audio into plain text.
+3. Timestamped transcription: timestamps.py runs Whisper and saves each detected segment with its start time, end time, and text.
+The second and third scripts run transcription independently; the third script does not read the text file created by the second script.
+Engineering Decisions
+- Python: Easy to read, test, and maintain.
+- Whisper base model: A practical balance between speed and transcription quality for a small project; no model training is needed.
+- Copy instead of move: Keeps the original audio file safe.
+- Text output: Easy for people to read.
+- JSON output: Easy for other programs and APIs to process.
+- Segment timestamps: Useful for finding when a sentence or phrase was spoken.
+- fp16=False: Allows Whisper to run on a CPU without the FP16 warning.
+Limitations and Future Improvements
+- File validation currently checks the filename extension, not the actual audio content.
+- Large audio files may take longer to process, especially on a CPU.
+- Segment timestamps are approximate and are not word-by-word timestamps.
+- The upload script may overwrite an existing file with the same name.
+- For production use, add file-size limits, unique filenames, stronger file validation, logging, and background processing for concurrent uploads.
+- The three scripts could be combined into one service or exposed through an API in a future version.
+Summary
+This project demonstrates a simple, modular audio transcription pipeline using Python and Whisper. It accepts an audio file, converts spoken language into text, and produces timestamped JSON that can be used by downstream applications.
