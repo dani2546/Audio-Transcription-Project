@@ -1,50 +1,47 @@
 
-import whisper
 import os
+import whisper
 
-# Folder containing audio files
-folder_path = r"C:\Users\user\Downloads\songs"
-
-# Load the speech recognition model
+# Load speech-to-text model
 model = whisper.load_model("base")
 
-# Supported audio formats
-audio_formats = (".mp3", ".wav", ".m4a", ".flac")
+def transcribe_audio(file_path):
 
-# Check whether the folder exists
-if not os.path.exists(folder_path):
-    print("Folder not found!")
-else:
-    for file in os.listdir(folder_path):
-        if file.lower().endswith(audio_formats):
-            audio_path = os.path.join(folder_path, file)
+    # Check whether the file exists
+    if not os.path.isfile(file_path):
+        print("Error: Audio file not found.")
+        return
 
-            print("Transcribing:", file)
+    # Check audio format
+    if not file_path.lower().endswith((".mp3", ".wav")):
+        print("Error: Only MP3 and WAV files are supported.")
+        return
 
-            try:
-                # Convert speech into text
-                result = model.transcribe(
-                    audio_path,
-                    fp16=False
-                )
+    try:
+        print("Transcribing audio...")
 
-                text = result["text"]
+        # Convert speech into text
+        result = model.transcribe(file_path, fp16=False)
 
-                print("Transcription:")
-                print(text)
+        transcription = result["text"].strip()
 
-                # Save transcription in a text file
-                output_path = os.path.join(
-                    folder_path,
-                    os.path.splitext(file)[0] + ".txt"
-                )
+        print("\nTranscription:")
+        print(transcription)
 
-                with open(output_path, "w", encoding="utf-8") as f:
-                    f.write(text)
+        # Save transcription to a text file
+        output_file = os.path.splitext(file_path)[0] + ".txt"
 
-                print("Saved:", output_path)
+        with open(output_file, "w", encoding="utf-8") as file:
+            file.write(transcription)
 
-            except Exception as e:
-                print("Error:", e)
+        print("\nTranscription saved at:", output_file)
 
-    print("Process finished!")
+        return transcription
+
+    except Exception as e:
+        print("Transcription failed:", e)
+
+
+if __name__ == "__main__":
+    audio_path = input("Enter audio file path: ").strip().strip('"')
+    transcribe_audio(audio_path)
